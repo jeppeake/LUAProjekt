@@ -13,8 +13,71 @@
 #include <thread>
 #include "lua.hpp"
 #include <irrlicht.h>
+#include <vector>
+#include <string>
+#include <sstream>
+
+struct sceneNodeObject {
+public:
+	sceneNodeObject(irr::scene::ISceneNode * node, std::string name) {
+		this->node = node;
+		this->name = name;
+	}
+	irr::scene::ISceneNode * node;
+	std::string name;
+};
 
 irr::scene::IAnimatedMeshSceneNode* node;
+std::vector<sceneNodeObject> objects;
+irr::scene::ISceneManager* smgr;
+bool searchName(std::string name) {
+	for (auto object : objects) {
+		if (object.name == name) {
+			return true;
+		}
+	}
+	return false;
+}
+std::string makeName() {
+	std::stringstream ss;
+	ss << "object_" << objects.size();
+	int count = 1;
+	while (searchName(ss.str())) {
+		ss.clear();
+		ss << "object_" << objects.size() + count;
+		count++;
+	}
+	return ss.str();
+}
+int _addCube(float x, float y, float z, float size, std::string name = "") {
+	bool valid;
+	std::string n_name;
+	if (name == "") {
+		valid = true;
+		std::cout << "No name set, generating name...\n";
+		n_name = makeName();
+		std::cout << "New name: " << n_name << "\n";
+	}
+	else {
+		valid = !searchName(name);
+		n_name = name;
+	}
+
+	if (valid) {
+		objects.push_back(sceneNodeObject(smgr->addCubeSceneNode(10, NULL, -1, irr::core::vector3df(x, y, z)), n_name));
+		objects.at(objects.size() - 1).node->setMaterialFlag(irr::video::EMF_LIGHTING, false);
+		std::cout << "New object created\n";
+		return 1;
+	}
+	else {
+		std::cout << "Name already in use!\n";
+		return -1;
+	}
+}
+
+static int addCube(lua_State* L) {
+	return 0;
+}
 
 static int updatepos(lua_State* L) {
 	if (lua_gettop(L) != 3) {
@@ -76,7 +139,7 @@ int main()
 
 	device->setWindowCaption(L"Hello World! - Irrlicht Engine Demo");
 	irr::video::IVideoDriver* driver	= device->getVideoDriver();
-	irr::scene::ISceneManager* smgr		= device->getSceneManager();
+	smgr		= device->getSceneManager();
 	irr::gui::IGUIEnvironment* guienv	= device->getGUIEnvironment();
 
 	guienv->addStaticText(L"Hello World! This is the Irrlicht Software renderer!", irr::core::rect<irr::s32>(10, 10, 260, 22), true);
@@ -100,9 +163,11 @@ int main()
 	node->setScale(irr::core::vector3df(0.5f, 0.5f, 0.5f));
 
 	//smgr->addCameraSceneNode(0, irr::core::vector3df(0, 30, -40), irr::core::vector3df(0, 5, 0));
-
+	_addCube(20, 20, 20, 10);
+	_addCube(20, 20, 20, 10);
+	_addCube(20, 20, 20, 10);
+	_addCube(20, 20, 20, 10, "object_0");
 	registerLuaFunctions(L);
-
 	auto camera = smgr->addCameraSceneNodeFPS();
 	while(device->run()) {
 		bool active = device->isWindowActive();
