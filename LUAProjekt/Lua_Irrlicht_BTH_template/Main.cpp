@@ -17,6 +17,11 @@
 #include <string>
 #include <sstream>
 
+using namespace irr::video;
+using namespace irr::scene;
+
+irr::IrrlichtDevice* device;
+
 struct sceneNodeObject {
 public:
 	sceneNodeObject(irr::scene::ISceneNode * node, std::string name) {
@@ -160,7 +165,7 @@ static int addMesh(lua_State* L) {
 
 	for (int i = 0; i < 3; i++) {
 		std::cout << "Table[" << i << "] coordinates: " << vertices[i][0] << " " << vertices[i][1] << " " << vertices[i][2] << "\n";
-		buf->Vertices[i] = irr::video::S3DVertex(vertices[i][0], vertices[i][1], vertices[i][3], 0, 1, 0, irr::video::SColor(255, 0, 255, 255), 0, 1);
+		buf->Vertices[i] = irr::video::S3DVertex(vertices[i][0], vertices[i][1], vertices[i][2], 0, 1, 0, irr::video::SColor(255, 0, 255, 255), 0, 1);
 	}
 
 	buf->Indices.reallocate(3);
