@@ -124,19 +124,32 @@ static int updatepos(lua_State* L) {
 
 static int addMesh(lua_State* L) {
 	luaL_argcheck(L, lua_istable(L, -1), 1, "<table> expected!");
-	if (!lua_rawgeti(L, 1, 1) || !lua_rawgeti(L, 1, 2) || !lua_rawgeti(L, 1, 3)) {
+
+	
+
+	if (!lua_rawgeti(L, 1, 1)) {
 		luaL_loadstring(L, "print('Error: not a valid number of vertices.')");
 		lua_pcall(L, 0, 0, 0);
 		lua_pop(L, 1);
 		return 0;
 	}
+
+	int verti = -1;
+	int subt = 2;
+	while (lua_istable(L, verti)) {
+		lua_rawgeti(L, 1, subt);
+		subt++;
+		//verti--;
+	}
+
 	//make sure all the 3 elements in the table are tables
-	luaL_argcheck(L, lua_istable(L, -1), 1, "<table> expected in table!");
+	/*luaL_argcheck(L, lua_istable(L, -1), 1, "<table> expected in table!");
 	luaL_argcheck(L, lua_istable(L, -2), 1, "<table> expected in table!");
-	luaL_argcheck(L, lua_istable(L, -3), 1, "<table> expected in table!");
-	float vertices[3][3];
+	luaL_argcheck(L, lua_istable(L, -3), 1, "<table> expected in table!");*/
+	std::vector<std::vector<float>> vertices;
+	//float vertices[-verti][3];
 	int index = 0; //sane index
-	for (int i = 2; i < 5; i++) {
+	for (int i = 2; i < subt; i++) {
 		//if too few coordinates are passed.
 		if (!lua_rawgeti(L, i, 1) || !lua_rawgeti(L, i, 2) || !lua_rawgeti(L, i, 3)) {
 			luaL_loadstring(L, "print('Error: number of components.')");
@@ -150,7 +163,10 @@ static int addMesh(lua_State* L) {
 		float zi = lua_tonumber(L, -1);
 		float yi = lua_tonumber(L, -2);
 		float xi = lua_tonumber(L, -3);
-		vertices[index][0] = xi; vertices[index][1] = yi; vertices[index][2] = zi;
+		std::vector<float> vector;
+		vector.push_back(xi); vector.push_back(yi); vector.push_back(zi);
+		vertices.push_back(vector);
+		//vertices[index][0] = xi; vertices[index][1] = yi; vertices[index][2] = zi;
 		index++;
 	}
 	SMesh* mesh = new SMesh();
@@ -160,20 +176,23 @@ static int addMesh(lua_State* L) {
 	mesh->addMeshBuffer(buf);
 	buf->drop();
 
-	buf->Vertices.reallocate(3);
-	buf->Vertices.set_used(3);
+	buf->Vertices.reallocate(subt-2);
+	buf->Vertices.set_used(subt-2);
+	buf->Indices.reallocate(subt - 2);
+	buf->Indices.set_used(subt - 2);
 
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < vertices.size(); i++) {
 		std::cout << "Table[" << i << "] coordinates: " << vertices[i][0] << " " << vertices[i][1] << " " << vertices[i][2] << "\n";
 		buf->Vertices[i] = irr::video::S3DVertex(vertices[i][0], vertices[i][1], vertices[i][2], 0, 1, 0, irr::video::SColor(255, 0, 255, 255), 0, 1);
+		buf->Indices[i] = i;
 	}
 
-	buf->Indices.reallocate(3);
-	buf->Indices.set_used(3);
+	buf->Indices.reallocate(subt-2);
+	buf->Indices.set_used(subt-2);
 
-	buf->Indices[0] = 0;
-	buf->Indices[1] = 1;
-	buf->Indices[2] = 2;
+	
+	/*buf->Indices[1] = 1;
+	buf->Indices[2] = 2;*/
 
 	buf->recalculateBoundingBox();
 
