@@ -17,6 +17,8 @@
 #include <string>
 #include <sstream>
 
+#include "GLF.hpp"
+
 using namespace irr::video;
 using namespace irr::scene;
 
@@ -35,6 +37,7 @@ public:
 irr::scene::IAnimatedMeshSceneNode* node;
 std::vector<sceneNodeObject> objects;
 irr::scene::ISceneManager* smgr;
+irr::scene::ICameraSceneNode* cameraNode;
 
 bool searchName(std::string name) {
 	for (auto object : objects) {
@@ -57,10 +60,32 @@ std::string makeName() {
 	return ss.str();
 }
 
-int _camera(irr::core::vector3df v1, irr::core::vector3df v2) {
-
+int _camera(irr::core::vector3df pos, irr::core::vector3df look_at) {
+	cameraNode->setPosition(pos);
+	cameraNode->setTarget(look_at);
 	return 1;
 }
+
+static int camera(lua_State* L) {
+	int args = lua_gettop(L);
+	if (args != 2) {//arguments length check
+		GLF::throwError(L, "ERROR: Wrong amount of arguments.");
+		return 0;
+	}
+	float* p = GLF::RTAV(L, 1, 3);
+	if (!p) {
+		return 0;
+	}
+
+	float* la = GLF::RTAV(L, 2, 3);
+	if (!la) {
+		return 0;
+	}
+	
+	_camera(irr::core::vector3df(p[0], p[1], p[2]), irr::core::vector3df(la[0], la[1], la[2]));
+	return 1;
+}
+//camera({100,100,100},{0,0,0})
 
 int _addBox(float x, float y, float z, float size, std::string name = "") {
 	bool valid;
@@ -92,27 +117,19 @@ int _addBox(float x, float y, float z, float size, std::string name = "") {
 static int addBox(lua_State* L) {
 	int args = lua_gettop(L);
 	if (args != 3 && args != 2) {//arguments length check
-		luaL_loadstring(L, "print('Syntax error')");
-		lua_pcall(L, 0, 0, 0);
-		lua_pop(L, 1);
+		GLF::throwError(L, "ERROR: Wrong amount of arguments.");
 		return 0;
 	}
-	luaL_checktype(L, 1, LUA_TTABLE);
-	lua_rawgeti(L, 1, 4);
-	int t = lua_isnil(L,-1);//checks table length, must be 3
-	if (t < 1) {
-		luaL_loadstring(L, "print('Syntax error')");
-		lua_pcall(L, 0, 0, 0);
-		lua_pop(L, 1);
+
+	float* p = GLF::RTAV(L,1,3);
+	if (!p) {
 		return 0;
 	}
-	int * p = new int[3];
-	for (int i = 1; i <= 3; i++) {//extract position data
-		lua_rawgeti(L, 1, i);
-		p[i-1] = luaL_checknumber(L, -1);
-		lua_pop(L, 1);
-	}
+
+	//std::cout << p[0] << p[1] << p[2] << "\n";
+
 	float size = luaL_checknumber(L, 2);//set size
+
 	std::string name;
 	if (args == 2) {
 		name = makeName();//generate name
@@ -120,8 +137,10 @@ static int addBox(lua_State* L) {
 	else {
 		name = luaL_checkstring(L, 3);//set name
 	}
+
 	int r = _addBox(p[0], p[1], p[2], size, name);//create box
 	//check return value?
+
 	delete p;
 	lua_settop(L, 0);//clear cache
 	return 0;
@@ -279,7 +298,7 @@ int main()
 
 	guienv->addStaticText(L"Hello World! This is the Irrlicht Software renderer!", irr::core::rect<irr::s32>(10, 10, 260, 22), true);
 
-	irr::scene::IAnimatedMesh* mesh = smgr->getMesh("../Meshes/sydney.md2");
+	/*irr::scene::IAnimatedMesh* mesh = smgr->getMesh("../Meshes/sydney.md2");
 	if (!mesh)
 	{
 		device->drop();
@@ -295,7 +314,7 @@ int main()
 		node->setMaterialTexture(0, driver->getTexture("../Meshes/sydney.bmp"));
 	}
 
-	node->setScale(irr::core::vector3df(0.5f, 0.5f, 0.5f));
+	node->setScale(irr::core::vector3df(0.5f, 0.5f, 0.5f));*/
 	
 	//smgr->addCameraSceneNode(0, irr::core::vector3df(0, 30, -40), irr::core::vector3df(0, 5, 0));
 	_addBox(20, 20, 20, 10);
@@ -305,12 +324,13 @@ int main()
 
 
 	lua_register(L, "addBox", addBox);
+	lua_register(L, "camera", camera);
 	registerLuaFunctions(L);
-	auto camera = smgr->addCameraSceneNodeFPS();
+	cameraNode = smgr->addCameraSceneNodeFPS();
 	while(device->run()) {
 		bool active = device->isWindowActive();
-		camera->setInputReceiverEnabled(active);
-		camera->setInputReceiverEnabled(active);
+		cameraNode->setInputReceiverEnabled(active);
+		cameraNode->setInputReceiverEnabled(active);
 
 		driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
 

@@ -1,4 +1,4 @@
-# LUAProjekt
+﻿# LUAProjekt
 
 
 #Att göra:
@@ -14,11 +14,11 @@
 
 **addMesh** (J)
 
-**addBox** (G)
+**addBox** (G)*
 
 **getNodes** (J)
 
-**camera** (G)
+**camera** (G)*
 
 **snapshot** (J)
     
