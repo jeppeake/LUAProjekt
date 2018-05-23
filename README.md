@@ -22,8 +22,8 @@
 
 **snapshot** (J)
     
-5. As scene nodes are added using these interfaces names must be generated if not supplied, and unique IDs.
+5. As scene nodes are added using these interfaces names must be generated if not supplied, and unique IDs.*
     
-6. The getNodes call return the type, name and id of each scene node in a table.
+6. The getNodes call return the type, name and id of each scene node in a table.*
     
-7. Each of the interfaces must verify their arguments and generate appropriate errors for the test data given later. 
+7. Each of the interfaces must verify their arguments and generate appropriate errors for the test data given later. *
