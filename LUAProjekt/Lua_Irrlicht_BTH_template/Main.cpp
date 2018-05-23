@@ -50,6 +50,15 @@ bool searchName(std::string name) {
 	return false;
 }
 
+sceneNodeObject* getNode(std::string name) {
+	for (auto object : objects) {
+		if (object.name == name) {
+			return &object;
+		}
+	}
+	return nullptr;
+}
+
 std::string makeName() {
 	std::stringstream ss;
 	ss << "object_" << smgr->getRootSceneNode()->getChildren().size();
@@ -94,9 +103,7 @@ int _addBox(float x, float y, float z, float size, std::string name = "") {
 	std::string n_name;
 	if (name == "") {
 		valid = true;
-		//std::cout << "No name set, generating name...\n";
 		n_name = makeName();
-		//std::cout << "New name: " << n_name << "\n";
 	}
 	else {
 		valid = !searchName(name);
@@ -114,8 +121,7 @@ int _addBox(float x, float y, float z, float size, std::string name = "") {
 		return 1;
 	}
 	else {
-		//std::cout << "Name already in use!\n";
-		return -1;
+		return -1;//name already in use
 	}
 }
 
@@ -123,11 +129,6 @@ static int addBox(lua_State* L) {
 	int args = lua_gettop(L);
 	if (args != 3 && args != 2) {//arguments length check
 		GLF::throwError(L, "ERROR: Wrong amount of arguments.");
-		return 0;
-	}
-
-	float* p = GLF::RTAV(L,1,3);
-	if (!p) {
 		return 0;
 	}
 
@@ -143,12 +144,21 @@ static int addBox(lua_State* L) {
 		name = luaL_checkstring(L, 3);//set name
 	}
 
-	int r = _addBox(p[0], p[1], p[2], size, name);//create box
-	//check return value?
+	float* p = GLF::RTAV(L, 1, 3);
+	if (!p) {
+		return 0;
+	}
 
+	int r = _addBox(p[0], p[1], p[2], size, name);//create box
+
+	if (r < 1) {
+		delete p;
+		GLF::throwError(L, "ERROR: name already used.");
+		return 0;
+	}
 	delete p;
 	lua_settop(L, 0);//clear cache
-	return 0;
+	return r;
 }
 //addBox({1,2,3},10,"Jared")
 
