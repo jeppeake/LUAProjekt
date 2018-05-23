@@ -16,7 +16,7 @@
 
 **addBox** (G)*
 
-**getNodes** (J)
+**getNodes** (J)*
 
 **camera** (G)*
 
