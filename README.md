@@ -12,7 +12,7 @@
     
 4. Implement: 
 
-**addMesh** (J)
+**addMesh** (J)*
 
 **addBox** (G)*
 
