@@ -134,12 +134,17 @@ static int addMesh(lua_State* L) {
 		return 0;
 	}
 
-	int verti = -1;
 	int subt = 2;
-	while (lua_istable(L, verti)) {
+	while (lua_istable(L, -1)) {
 		lua_rawgeti(L, 1, subt);
 		subt++;
-		//verti--;
+	}
+
+	if ((subt - 2) % 3 != 0) {
+		luaL_loadstring(L, "print('Error: not a valid number of vertices.')");
+		lua_pcall(L, 0, 0, 0);
+		lua_pop(L, 1);
+		return 0;
 	}
 
 	//make sure all the 3 elements in the table are tables
