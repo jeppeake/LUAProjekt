@@ -264,7 +264,18 @@ static int getNodes(lua_State* L) {
 		lua_setfield(L, -2, "name");
 		lua_pushnumber(L, cnode->getID());
 		lua_setfield(L, -2, "id");
-		
+
+		std::string type = "unknown";
+		switch (cnode->getType()) {
+		case ESNT_CUBE:
+			type = "CUBE";
+			break;
+		case ESNT_MESH:
+			type = "MESH";
+		}
+
+		lua_pushstring(L, type.c_str());
+		lua_setfield(L, -2, "type");
 
 		lua_rawseti(L, -2, count);
 		count++;
