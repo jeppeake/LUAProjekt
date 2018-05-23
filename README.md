@@ -20,7 +20,7 @@
 
 **camera** (G)*
 
-**snapshot** (J)
+**snapshot** (J)*
     
 5. As scene nodes are added using these interfaces names must be generated if not supplied, and unique IDs.*
     
