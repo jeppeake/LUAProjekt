@@ -35,6 +35,7 @@ public:
 irr::scene::IAnimatedMeshSceneNode* node;
 std::vector<sceneNodeObject> objects;
 irr::scene::ISceneManager* smgr;
+
 bool searchName(std::string name) {
 	for (auto object : objects) {
 		if (object.name == name) {
@@ -43,6 +44,7 @@ bool searchName(std::string name) {
 	}
 	return false;
 }
+
 std::string makeName() {
 	std::stringstream ss;
 	ss << "object_" << objects.size();
@@ -54,14 +56,20 @@ std::string makeName() {
 	}
 	return ss.str();
 }
+
+int _camera(irr::core::vector3df v1, irr::core::vector3df v2) {
+
+	return 1;
+}
+
 int _addBox(float x, float y, float z, float size, std::string name = "") {
 	bool valid;
 	std::string n_name;
 	if (name == "") {
 		valid = true;
-		std::cout << "No name set, generating name...\n";
+		//std::cout << "No name set, generating name...\n";
 		n_name = makeName();
-		std::cout << "New name: " << n_name << "\n";
+		//std::cout << "New name: " << n_name << "\n";
 	}
 	else {
 		valid = !searchName(name);
@@ -69,44 +77,57 @@ int _addBox(float x, float y, float z, float size, std::string name = "") {
 	}
 
 	if (valid) {
-		objects.push_back(sceneNodeObject(smgr->addCubeSceneNode(10, NULL, -1, irr::core::vector3df(x, y, z)), n_name));
+		objects.push_back(sceneNodeObject(smgr->addCubeSceneNode(size, NULL, -1, irr::core::vector3df(x, y, z)), n_name));
 		objects.at(objects.size() - 1).node->setMaterialFlag(irr::video::EMF_LIGHTING, false);
+		objects.at(objects.size() - 1).node->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
 		std::cout << "New object created\n";
 		return 1;
 	}
 	else {
-		std::cout << "Name already in use!\n";
+		//std::cout << "Name already in use!\n";
 		return -1;
 	}
 }
+
 static int addBox(lua_State* L) {
-	//std::cout << lua_gettop(L) << "\n";
-	//lua_settop(L, 1);
-	//float x = std::atof(lua_tostring(L, -3));
-	//std::cout << x << "\n";
 	int args = lua_gettop(L);
-	std::cout << args << "\n";
-	if (args != 3 && args != 2) {
+	if (args != 3 && args != 2) {//arguments length check
 		luaL_loadstring(L, "print('Syntax error')");
 		lua_pcall(L, 0, 0, 0);
 		lua_pop(L, 1);
 		return 0;
 	}
 	luaL_checktype(L, 1, LUA_TTABLE);
-	//float * TC = lua_touserdata(L,1);
-	//check table content
-	float size = luaL_checknumber(L, 2);
+	lua_rawgeti(L, 1, 4);
+	int t = lua_isnil(L,-1);//checks table length, must be 3
+	if (t < 1) {
+		luaL_loadstring(L, "print('Syntax error')");
+		lua_pcall(L, 0, 0, 0);
+		lua_pop(L, 1);
+		return 0;
+	}
+	int * p = new int[3];
+	for (int i = 1; i <= 3; i++) {//extract position data
+		lua_rawgeti(L, 1, i);
+		p[i-1] = luaL_checknumber(L, -1);
+		lua_pop(L, 1);
+	}
+	float size = luaL_checknumber(L, 2);//set size
 	std::string name;
 	if (args == 2) {
-		name = makeName();
+		name = makeName();//generate name
 	}
 	else {
-		name = luaL_checkstring(L, 3);
+		name = luaL_checkstring(L, 3);//set name
 	}
-	std::cout << size << " : " << name << "\n";
+	int r = _addBox(p[0], p[1], p[2], size, name);//create box
+	//check return value?
+	delete p;
+	lua_settop(L, 0);//clear cache
 	return 0;
 }
 //addBox({1,2,3},10,"Jared")
+
 static int updatepos(lua_State* L) {
 	if (lua_gettop(L) != 3) {
 		luaL_loadstring(L, "print('Wrong number of parameters, use this format: updatepos(x,y,z)')");
