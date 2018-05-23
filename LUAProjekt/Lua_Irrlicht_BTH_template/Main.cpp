@@ -26,18 +26,7 @@ irr::IrrlichtDevice* device;
 
 void render();
 
-struct sceneNodeObject {
-public:
-	sceneNodeObject(irr::scene::ISceneNode * node, std::string name) {
-		this->node = node;
-		this->name = name;
-	}
-	irr::scene::ISceneNode * node;
-	std::string name;
-};
-
 irr::scene::IAnimatedMeshSceneNode* node;
-std::vector<sceneNodeObject> objects;
 irr::scene::ISceneManager* smgr;
 irr::scene::ICameraSceneNode* cameraNode;
 
@@ -48,15 +37,6 @@ bool searchName(std::string name) {
 		}
 	}
 	return false;
-}
-
-sceneNodeObject* getNode(std::string name) {
-	for (auto object : objects) {
-		if (object.name == name) {
-			return &object;
-		}
-	}
-	return nullptr;
 }
 
 std::string makeName() {
@@ -256,8 +236,6 @@ static int addMesh(lua_State* L) {
 	std::string n_name = makeName();
 	myNode->setName(n_name.c_str());
 	myNode->setID(smgr->getRootSceneNode()->getChildren().size());
-
-	objects.push_back(sceneNodeObject(myNode, n_name));
 
 	myNode->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
 	myNode->setMaterialFlag(irr::video::EMF_LIGHTING, false);
