@@ -40,8 +40,8 @@ irr::scene::ISceneManager* smgr;
 irr::scene::ICameraSceneNode* cameraNode;
 
 bool searchName(std::string name) {
-	for (auto object : objects) {
-		if (object.name == name) {
+	for (auto object : smgr->getRootSceneNode()->getChildren()) {
+		if (object->getName() == name) {
 			return true;
 		}
 	}
@@ -50,11 +50,11 @@ bool searchName(std::string name) {
 
 std::string makeName() {
 	std::stringstream ss;
-	ss << "object_" << objects.size();
+	ss << "object_" << smgr->getRootSceneNode()->getChildren().size();
 	int count = 1;
 	while (searchName(ss.str())) {
 		ss.clear();
-		ss << "object_" << objects.size() + count;
+		ss << "object_" << smgr->getRootSceneNode()->getChildren().size() + count;
 		count++;
 	}
 	return ss.str();
@@ -102,9 +102,12 @@ int _addBox(float x, float y, float z, float size, std::string name = "") {
 	}
 
 	if (valid) {
-		objects.push_back(sceneNodeObject(smgr->addCubeSceneNode(size, NULL, -1, irr::core::vector3df(x, y, z)), n_name));
-		objects.at(objects.size() - 1).node->setMaterialFlag(irr::video::EMF_LIGHTING, false);
-		objects.at(objects.size() - 1).node->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
+		irr::scene::ISceneNode* mnode = smgr->addCubeSceneNode(size, NULL, -1, irr::core::vector3df(x, y, z));
+		mnode->setID(smgr->getRootSceneNode()->getChildren().size());
+		//objects.push_back(sceneNodeObject(mnode, n_name));
+		mnode->setName(n_name.c_str());
+		mnode->setMaterialFlag(irr::video::EMF_LIGHTING, false);
+		mnode->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
 		std::cout << "New object created\n";
 		return 1;
 	}
@@ -175,6 +178,7 @@ static int addMesh(lua_State* L) {
 	}
 
 	int subt = 2;
+	//read all subtables in argument, stop when non-table is found
 	while (lua_istable(L, -1)) {
 		lua_rawgeti(L, 1, subt);
 		subt++;
@@ -187,10 +191,6 @@ static int addMesh(lua_State* L) {
 		return 0;
 	}
 
-	//make sure all the 3 elements in the table are tables
-	/*luaL_argcheck(L, lua_istable(L, -1), 1, "<table> expected in table!");
-	luaL_argcheck(L, lua_istable(L, -2), 1, "<table> expected in table!");
-	luaL_argcheck(L, lua_istable(L, -3), 1, "<table> expected in table!");*/
 	std::vector<std::vector<float>> vertices;
 	//float vertices[-verti][3];
 	int index = 0; //sane index
@@ -235,20 +235,41 @@ static int addMesh(lua_State* L) {
 	buf->Indices.reallocate(subt-2);
 	buf->Indices.set_used(subt-2);
 
-	
-	/*buf->Indices[1] = 1;
-	buf->Indices[2] = 2;*/
-
 	buf->recalculateBoundingBox();
 
 
 	IMeshSceneNode* myNode = device->getSceneManager()->addMeshSceneNode(mesh);
+
+
+	std::string n_name = makeName();
+	myNode->setName(n_name.c_str());
+	myNode->setID(smgr->getRootSceneNode()->getChildren().size());
+
+	objects.push_back(sceneNodeObject(myNode, n_name));
 
 	myNode->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
 	myNode->setMaterialFlag(irr::video::EMF_LIGHTING, false);
 	myNode->setMaterialFlag(irr::video::EMF_NORMALIZE_NORMALS, false);
 	
 	return 0;
+}
+
+static int getNodes(lua_State* L) {
+	irr::core::list<irr::scene::ISceneNode*>  children = smgr->getRootSceneNode()->getChildren();
+	lua_newtable(L);
+	int count = 1;
+	for (irr::scene::ISceneNode* cnode : children) {
+		lua_newtable(L);
+		lua_pushstring(L, cnode->getName());
+		lua_setfield(L, -2, "name");
+		lua_pushnumber(L, cnode->getID());
+		lua_setfield(L, -2, "id");
+		
+
+		lua_rawseti(L, -2, count);
+		count++;
+	}
+	return 1;
 }
 
 static int getpos(lua_State* L) {
@@ -270,6 +291,8 @@ void registerLuaFunctions(lua_State* L) {
 	lua_setglobal(L, "getpos");
 	lua_pushcfunction(L, addMesh);
 	lua_setglobal(L, "addMesh");
+	lua_pushcfunction(L, getNodes);
+	lua_setglobal(L, "getNodes");
 }
 
 
