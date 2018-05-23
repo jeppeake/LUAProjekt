@@ -24,6 +24,8 @@ using namespace irr::scene;
 
 irr::IrrlichtDevice* device;
 
+void render();
+
 struct sceneNodeObject {
 public:
 	sceneNodeObject(irr::scene::ISceneNode * node, std::string name) {
@@ -283,6 +285,26 @@ static int getNodes(lua_State* L) {
 	return 1;
 }
 
+static int snapshot(lua_State* L) {
+	luaL_argcheck(L, lua_isstring(L, -1), 1, "<string> expected.");
+	std::string output = luaL_checkstring(L,-1);
+
+	//render();
+	Sleep(500);
+
+	irr::video::IImage* ss = device->getVideoDriver()->createScreenShot();
+
+	
+
+	if (!device->getVideoDriver()->writeImageToFile(ss, output.c_str())) {
+		luaL_loadstring(L, "print('Error: failed to write file!')");
+		lua_pcall(L, 0, 0, 0);
+		lua_pop(L, 1);
+		return 0;
+	}
+	return 0;
+}
+
 static int getpos(lua_State* L) {
 	irr::core::vector3df pos = node->getPosition();
 	lua_newtable(L);
@@ -304,6 +326,8 @@ void registerLuaFunctions(lua_State* L) {
 	lua_setglobal(L, "addMesh");
 	lua_pushcfunction(L, getNodes);
 	lua_setglobal(L, "getNodes");
+	lua_pushcfunction(L, snapshot);
+	lua_setglobal(L, "snapshot");
 }
 
 
@@ -317,6 +341,18 @@ void ConsoleThread(lua_State* L) {
 			lua_pop(L, 1);
 		}
 	}
+}
+
+void render() {
+	bool active = device->isWindowActive();
+	cameraNode->setInputReceiverEnabled(active);
+	cameraNode->setInputReceiverEnabled(active);
+
+	device->getVideoDriver()->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
+	smgr->drawAll();
+	device->getGUIEnvironment()->drawAll();
+
+	device->getVideoDriver()->endScene();
 }
 
 int main()
@@ -335,7 +371,6 @@ int main()
 	smgr		= device->getSceneManager();
 	irr::gui::IGUIEnvironment* guienv	= device->getGUIEnvironment();
 
-	guienv->addStaticText(L"Hello World! This is the Irrlicht Software renderer!", irr::core::rect<irr::s32>(10, 10, 260, 22), true);
 
 	/*irr::scene::IAnimatedMesh* mesh = smgr->getMesh("../Meshes/sydney.md2");
 	if (!mesh)
@@ -356,10 +391,10 @@ int main()
 	node->setScale(irr::core::vector3df(0.5f, 0.5f, 0.5f));*/
 	
 	//smgr->addCameraSceneNode(0, irr::core::vector3df(0, 30, -40), irr::core::vector3df(0, 5, 0));
+	/*_addBox(20, 20, 20, 10);
 	_addBox(20, 20, 20, 10);
 	_addBox(20, 20, 20, 10);
-	_addBox(20, 20, 20, 10);
-	_addBox(20, 20, 20, 10, "object_0");
+	_addBox(20, 20, 20, 10, "object_0");*/
 
 
 	lua_register(L, "addBox", addBox);
@@ -367,16 +402,7 @@ int main()
 	registerLuaFunctions(L);
 	cameraNode = smgr->addCameraSceneNodeFPS();
 	while(device->run()) {
-		bool active = device->isWindowActive();
-		cameraNode->setInputReceiverEnabled(active);
-		cameraNode->setInputReceiverEnabled(active);
-
-		driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
-
-		smgr->drawAll();
-		guienv->drawAll();
-
-		driver->endScene();
+		render();
 	}
 
 	device->drop();
