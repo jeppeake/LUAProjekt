@@ -14,6 +14,7 @@
 #include "lua.hpp"
 #include <irrlicht.h>
 #include <vector>
+#include <vector2d.h>
 #include <string>
 #include <sstream>
 #include <istream>
@@ -32,6 +33,7 @@ void render();
 irr::scene::IAnimatedMeshSceneNode* node;
 irr::scene::ISceneManager* smgr;
 irr::scene::ICameraSceneNode* cameraNode;
+irr::video::IVideoDriver* driver;
 
 bool searchName(std::string name) {
 	for (auto object : smgr->getRootSceneNode()->getChildren()) {
@@ -53,6 +55,121 @@ std::string makeName() {
 	}
 	return ss.str();
 }
+
+static int bind(lua_State* L) {
+	int args = lua_gettop(L);
+	if (args != 2) {//arguments length check
+		GLF::throwError(L, "ERROR: Wrong amount of arguments.");
+		return 0;
+	}
+
+	std::string object = luaL_checkstring(L, 1);
+	std::string texture = luaL_checkstring(L, 2);
+
+	const irr::c8* object_p = object.c_str();
+
+	irr::io::path texture_p;
+	texture_p.append(texture.c_str());
+
+	irr::video::ITexture* tex = driver->getTexture(texture_p);
+	irr::scene::ISceneNode* node = smgr->getSceneNodeFromName(object_p);
+
+	node->setMaterialTexture(0, tex);
+
+	lua_settop(L, 0);//clear cache
+
+}
+
+static int addTexture(lua_State* L) {
+	int args = lua_gettop(L);
+	if (args != 2) {//arguments length check
+		GLF::throwError(L, "ERROR: Wrong amount of arguments.");
+		return 0;
+	}
+
+	int dim1 = GLF::EDC(L, 1);
+	if ((dim1 & (dim1 - 1)) != 0) {
+		GLF::throwError(L, "ERROR: the dimension is not a power of two.");
+		return 0;
+	}
+	std::cout << dim1 << "\n";
+	int* dim2 = new int[dim1];
+	int start = 3;
+	for (int i = 3; i < dim1 + 3; i++) {
+		dim2[i - 3] = GLF::EDC(L, i);
+	}
+	std::cout << dim2[0] << " : " << dim2[1] << " : " << dim2[2] << " : " << dim2[3] << "\n";
+	for (int i = 0; i < dim1; i++) {
+		if (dim2[i] != dim1) {
+			GLF::throwError(L,"ERROR: dimension mismatch.");
+			return 0;
+		}
+	}
+	delete dim2;
+	//float* p1 = GLF::RTAV(L, -5, 3);
+		//std::cout << p1[0] << " : " << p1[1] << " : " << p1[2] << "\n";
+
+	float** values = new float*[dim1 * dim1];
+	irr::core::dimension2d<irr::u32> d2v(dim1, dim1);
+	byte* bf = new byte[dim1 * dim1];
+	byte* bfc = new byte[dim1 * dim1];
+	for (int i = 0; i < dim1 * dim1; i++) {
+		unsigned int* p = GLF::RTAUV(L, -(i + 1), 3);
+		irr::video::SColor c;
+		for (int j = 0; j < 3; j++) {
+			if (p[j] > 255) {
+				p[j] = 255;
+			}
+		}
+		c.setAlpha(128);
+		c.setRed(p[0]);
+		c.setBlue(p[1]);
+		c.setGreen(p[2]);
+		byte* b = new byte;
+		c.getData(b, ECF_A8R8G8B8);
+		//std::cout << *b << "\n";
+		bf[i] = *b;
+		//std::cout << v2[i][0] << " : " << v2[i][1] << " : " << v2[i][2] << "\n";
+	}
+	driver->convertColor(bf, ECF_R8G8B8, dim1 * dim1, bfc, driver->getColorFormat());
+
+	std::string name = luaL_checkstring(L, 2);//set name
+	irr::io::path p;
+	p.append(name.c_str());
+
+	irr::video::IImage* image = driver->createImageFromData(driver->getColorFormat(), d2v, bfc);
+	driver->addTexture(p, image);
+
+	/*GLF::ED(L, 3, 2);
+	GLF::ED(L, 4, 2);
+
+	float* p1 = GLF::RTAV(L, -1, 3);
+	float* p2 = GLF::RTAV(L, -2, 3);
+	float* p3 = GLF::RTAV(L, -3, 3);
+	float* p4 = GLF::RTAV(L, -4, 3);
+	if (!p1 || !p2 || !p3 || !p4) {
+		delete p1;
+		delete p2;
+		delete p3;
+		delete p4;
+		return 0;
+	}
+	for (int i = 0; i < 3; i++) {
+		std::cout << p1[i] << " : " << p2[i] << " : " << p3[i] << " : " << p4[i] << "\n";
+	}
+
+	delete p1;
+	delete p2;
+	delete p3;
+	delete p4;*/
+
+	lua_settop(L, 0);//clear cache
+	return 1;
+}
+//addTexture({{{1,2,3},{4,5,6}},{{7,8,9},{10,11,12}}}, "2x2")
+//addTexture({{{1,2,3},{4,5,6},{7,8,9},{10,11,12}},{{13,14,15},{16,17,18},{19,20,21},{22,23,24}},{{25,26,27},{28,29,30},{31,32,33},{34,35,36}},{{37,38,39},{40,41,42},{43,44,45},{46,47,48}}}, "4x4")
+//addTexture({{{1,2,3},{4,5,6},{7,8,9}},{{13,14,15},{16,17,18},{19,20,21}},{{25,26,27},{28,29,30},{31,32,33}}}, "3x3")
+//addTexture({{{1,2,3},{4,5,6},{7,8,9}},{{13,14,15},{16,17,18},{19,20,21}}}, "2x3")
 
 int _camera(irr::core::vector3df pos, irr::core::vector3df look_at) {
 	cameraNode->setPosition(pos);
@@ -380,7 +497,8 @@ int main()
 		return 1;
 
 	device->setWindowCaption(L"LUA Project");
-	irr::video::IVideoDriver* driver	= device->getVideoDriver();
+	driver	= device->getVideoDriver();
+
 	smgr		= device->getSceneManager();
 	irr::gui::IGUIEnvironment* guienv	= device->getGUIEnvironment();
 
@@ -411,9 +529,10 @@ int main()
 	_addBox(20, 20, 20, 10);
 	_addBox(20, 20, 20, 10, "object_0");*/
 
-
+	lua_register(L, "bind", bind);
 	lua_register(L, "addBox", addBox);
 	lua_register(L, "camera", camera);
+	lua_register(L, "addTexture", addTexture);
 	registerLuaFunctions(L);
 	cameraNode = smgr->addCameraSceneNodeFPS();
 	while(device->run()) {
