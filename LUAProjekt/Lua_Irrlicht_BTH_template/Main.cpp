@@ -16,8 +16,11 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <istream>
+#include <fstream>
 
 #include "GLF.hpp"
+#include "rules.h"
 
 using namespace irr::video;
 using namespace irr::scene;
@@ -293,6 +296,26 @@ static int snapshot(lua_State* L) {
 	return 0;
 }
 
+static int loadScene(lua_State* L) {
+	luaL_argcheck(L, lua_isstring(L, -1), 1, "<string> expected.");
+	std::string file = luaL_checkstring(L, -1);
+
+	std::ifstream ifs(file, std::ifstream::in);
+	std::string contents((std::istreambuf_iterator<char>(ifs)),
+		std::istreambuf_iterator<char>());
+
+	const char* chars = contents.c_str();
+
+	Parser p = Parser(chars);
+	Tree* tred;
+	p.DESCRIPTOR(&tred);
+	tred->dump();
+	std::vector<loadedmesh> meshes;
+	tred->generateScene(smgr, &meshes);
+
+	return 0;
+}
+
 static int getpos(lua_State* L) {
 	irr::core::vector3df pos = node->getPosition();
 	lua_newtable(L);
@@ -316,6 +339,8 @@ void registerLuaFunctions(lua_State* L) {
 	lua_setglobal(L, "getNodes");
 	lua_pushcfunction(L, snapshot);
 	lua_setglobal(L, "snapshot");
+	lua_pushcfunction(L, loadScene);
+	lua_setglobal(L, "loadScene");
 }
 
 
@@ -348,7 +373,7 @@ int main()
 	lua_State* L = luaL_newstate();
 	luaL_openlibs(L);
 
-		std::thread conThread(ConsoleThread, L);
+	std::thread conThread(ConsoleThread, L);
 
 	device = irr::createDevice(irr::video::EDT_SOFTWARE, irr::core::dimension2d<irr::u32>(640, 480), 16, false, false, true, 0);
 	if(!device)
@@ -359,6 +384,8 @@ int main()
 	smgr		= device->getSceneManager();
 	irr::gui::IGUIEnvironment* guienv	= device->getGUIEnvironment();
 
+
+	
 
 	/*irr::scene::IAnimatedMesh* mesh = smgr->getMesh("../Meshes/sydney.md2");
 	if (!mesh)
