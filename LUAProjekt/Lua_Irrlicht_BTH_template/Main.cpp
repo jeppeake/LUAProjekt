@@ -471,8 +471,9 @@ int main()
 	if(!device)
 		return 1;
 
-	device->setWindowCaption(L"Hello World! - Irrlicht Engine Demo");
+	device->setWindowCaption(L"LUA Project");
 	driver	= device->getVideoDriver();
+
 	smgr		= device->getSceneManager();
 	irr::gui::IGUIEnvironment* guienv	= device->getGUIEnvironment();
 
