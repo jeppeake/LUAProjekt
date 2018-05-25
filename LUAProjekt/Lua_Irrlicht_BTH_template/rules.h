@@ -333,9 +333,9 @@ public:
 		TABSPACE();
 		if (MESHADD(&child1) || BIND(&child1)) {
 			*result = new Tree("SCENEACTION", (char*)start, input - start);
-			(*result)->children.push_back(child1); //add action as first child
+			(*result)->children.push_back(child1);
 			if (SCENEACTION(&child2)) {
-				(*result)->children.push_back(child2); //add action as first child
+				(*result)->children.push_back(child2); //next sceneAction node
 				return true;
 			}
 			return true;
@@ -352,7 +352,7 @@ public:
 			TABSPACE();
 			if (SCENEACTION(&child2) && TABSPACE() && TERM("}", &child1)) {
 				*result = new Tree("SCENE", (char*)start, input - start);
-				(*result)->children.push_back(child2); //add scene action as child
+				(*result)->children.push_back(child2);
 				return true;
 			}
 		}

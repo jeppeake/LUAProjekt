@@ -57,7 +57,7 @@ public:
 			float z = std::stof(children.at(2)->lexeme);
 			float tu = std::stof(children.at(3)->lexeme);
 			float tv = std::stof(children.at(4)->lexeme);
-			vertices->push_back(irr::video::S3DVertex(x, y, z, 0, 1, 0, irr::video::SColor(0, 0, 0, 0), tu, tv));
+			vertices->push_back(irr::video::S3DVertex(x, y, z, 0, 1, 0, irr::video::SColor(255, 255, 255, 255), tu, tv));
 			if (children.size() == 6) {
 				//step down the vertex list
 				children.at(5)->cumulateVertices(vertices);
@@ -111,13 +111,9 @@ public:
 						irr::io::path texture_p;
 						texture_p.append(texname.c_str());
 
-						//irr::video::ITexture* tex = driver->getTexture("texture.bmp");
-
-
-						myNode->setMaterialTexture(1, driver->getTexture(texture_p));
+						myNode->setMaterialTexture(0, driver->getTexture(texture_p));
 						myNode->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
 						myNode->setMaterialFlag(irr::video::EMF_LIGHTING, false);
-						//myNode->setMaterialFlag(irr::video::EMF_NORMALIZE_NORMALS, false);
 					}
 				}
 			}
@@ -148,7 +144,7 @@ public:
 
 				for (int i = 0; i < vertices.size(); i++) {
 					buf->Vertices[i] = vertices[i];
-					buf->Indices[i] = vertices.size() - 1 - i;
+					buf->Indices[i] = i;
 				}
 
 				buf->Indices.reallocate(vertices.size());
@@ -156,6 +152,7 @@ public:
 
 				buf->recalculateBoundingBox();
 
+				mesh->setMaterialFlag(EMF_BACK_FACE_CULLING, false);
 				mesh->setMaterialFlag(EMF_LIGHTING, false);
 
 				meshes->push_back(loadedmesh(mesh, name));
@@ -178,22 +175,23 @@ public:
 
 				float** values = new float*[dim1 * dim1];
 				irr::core::dimension2d<irr::u32> d2v(dim1, dim1);
-				byte* bf = new byte[dim1 * dim1];
-				byte* bfc = new byte[dim1 * dim1];
+
+				unsigned int* bf = new unsigned int[dim1 * dim1];
+				unsigned int* bfc = new unsigned int[dim1 * dim1];
 
 				for (int i = 0; i < vectors.size(); i++) {
 					irr::video::SColor c;
 					c.setAlpha(255);
-					c.setRed(vectors[i].X);
-					c.setBlue(vectors[i].Y);
-					c.setGreen(vectors[i].Z);
-					byte* b = new byte;
+					c.setRed(vectors[i].X*255);
+					c.setBlue(vectors[i].Y*255);
+					c.setGreen(vectors[i].Z*255);
+					unsigned int* b = new unsigned int;
 					c.getData(b, ECF_A8R8G8B8);
 					//std::cout << *b << "\n";
 					bf[i] = *b;
 				}
 
-				driver->convertColor(bf, ECF_R8G8B8, dim1 * dim1, bfc, driver->getColorFormat());
+				driver->convertColor(bf, ECF_A8R8G8B8, dim1 * dim1, bfc, driver->getColorFormat());
 
 				irr::io::path p;
 				p.append(name.c_str());

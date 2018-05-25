@@ -110,27 +110,30 @@ static int addTexture(lua_State* L) {
 
 	float** values = new float*[dim1 * dim1];
 	irr::core::dimension2d<irr::u32> d2v(dim1, dim1);
-	byte* bf = new byte[dim1 * dim1];
-	byte* bfc = new byte[dim1 * dim1];
+	unsigned int* bf = new unsigned int[dim1 * dim1];
+	unsigned int* bfc = new unsigned int[dim1 * dim1];
 	for (int i = 0; i < dim1 * dim1; i++) {
-		unsigned int* p = GLF::RTAUV(L, -(i + 1), 3);
+		float* p = GLF::RTAV(L, -(i + 1), 3);
 		irr::video::SColor c;
 		for (int j = 0; j < 3; j++) {
-			if (p[j] > 255) {
-				p[j] = 255;
+			if (p[j] > 1) {
+				p[j] = 1;
 			}
 		}
-		c.setAlpha(128);
-		c.setRed(p[0]);
-		c.setBlue(p[1]);
-		c.setGreen(p[2]);
-		byte* b = new byte;
+		float r = p[0];
+		float g = p[1];
+		float bb = p[2];
+		c.setAlpha(255);
+		c.setRed(p[0]*255);
+		c.setBlue(p[1]*255);
+		c.setGreen(p[2]*255);
+		unsigned int* b = new unsigned int;
 		c.getData(b, ECF_A8R8G8B8);
 		//std::cout << *b << "\n";
 		bf[i] = *b;
 		//std::cout << v2[i][0] << " : " << v2[i][1] << " : " << v2[i][2] << "\n";
 	}
-	driver->convertColor(bf, ECF_R8G8B8, dim1 * dim1, bfc, driver->getColorFormat());
+	driver->convertColor(bf, ECF_A8R8G8B8, dim1 * dim1, bfc, driver->getColorFormat());
 
 	std::string name = luaL_checkstring(L, 2);//set name
 	irr::io::path p;
