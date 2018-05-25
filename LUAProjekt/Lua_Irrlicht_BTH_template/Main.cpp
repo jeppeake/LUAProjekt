@@ -396,7 +396,7 @@ static int snapshot(lua_State* L) {
 	luaL_argcheck(L, lua_isstring(L, -1), 1, "<string> expected.");
 	std::string output = luaL_checkstring(L,-1);
 
-	render();
+	//render();
 	Sleep(2000);
 
 	irr::video::IImage* ss = device->getVideoDriver()->createScreenShot();
