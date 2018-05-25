@@ -73,8 +73,6 @@ static int bind(lua_State* L) {
 		return 0;
 	}
 
-	
-
 	irr::io::path texture_p;
 	texture_p.append(texture.c_str());
 
@@ -105,13 +103,11 @@ static int addTexture(lua_State* L) {
 		GLF::throwError(L, "ERROR: the dimension is not a power of two.");
 		return 0;
 	}
-	//std::cout << dim1 << "\n";
 	int* dim2 = new int[dim1];
 	int start = 3;
 	for (int i = 3; i < dim1 + 3; i++) {
 		dim2[i - 3] = GLF::EDC(L, i);
 	}
-	//std::cout << dim2[0] << " : " << dim2[1] << " : " << dim2[2] << " : " << dim2[3] << "\n";
 	for (int i = 0; i < dim1; i++) {
 		if (dim2[i] != dim1) {
 			GLF::throwError(L,"ERROR: dimension mismatch.");
@@ -119,8 +115,6 @@ static int addTexture(lua_State* L) {
 		}
 	}
 	delete dim2;
-	//float* p1 = GLF::RTAV(L, -5, 3);
-		//std::cout << p1[0] << " : " << p1[1] << " : " << p1[2] << "\n";
 
 	float** values = new float*[dim1 * dim1];
 	irr::core::dimension2d<irr::u32> d2v(dim1, dim1);
@@ -156,36 +150,9 @@ static int addTexture(lua_State* L) {
 	irr::video::IImage* image = driver->createImageFromData(driver->getColorFormat(), d2v, bfc);
 	driver->addTexture(p, image);
 
-	/*GLF::ED(L, 3, 2);
-	GLF::ED(L, 4, 2);
-
-	float* p1 = GLF::RTAV(L, -1, 3);
-	float* p2 = GLF::RTAV(L, -2, 3);
-	float* p3 = GLF::RTAV(L, -3, 3);
-	float* p4 = GLF::RTAV(L, -4, 3);
-	if (!p1 || !p2 || !p3 || !p4) {
-		delete p1;
-		delete p2;
-		delete p3;
-		delete p4;
-		return 0;
-	}
-	for (int i = 0; i < 3; i++) {
-		std::cout << p1[i] << " : " << p2[i] << " : " << p3[i] << " : " << p4[i] << "\n";
-	}
-
-	delete p1;
-	delete p2;
-	delete p3;
-	delete p4;*/
-
 	lua_settop(L, 0);//clear cache
 	return 1;
 }
-//addTexture({{{1,2,3},{4,5,6}},{{7,8,9},{10,11,12}}}, "2x2")
-//addTexture({{{1,2,3},{4,5,6},{7,8,9},{10,11,12}},{{13,14,15},{16,17,18},{19,20,21},{22,23,24}},{{25,26,27},{28,29,30},{31,32,33},{34,35,36}},{{37,38,39},{40,41,42},{43,44,45},{46,47,48}}}, "4x4")
-//addTexture({{{1,2,3},{4,5,6},{7,8,9}},{{13,14,15},{16,17,18},{19,20,21}},{{25,26,27},{28,29,30},{31,32,33}}}, "3x3")
-//addTexture({{{1,2,3},{4,5,6},{7,8,9}},{{13,14,15},{16,17,18},{19,20,21}}}, "2x3")
 
 int _camera(irr::core::vector3df pos, irr::core::vector3df look_at) {
 	cameraNode->setPosition(pos);
@@ -320,7 +287,6 @@ static int addMesh(lua_State* L) {
 	}
 
 	std::vector<std::vector<float>> vertices;
-	//float vertices[-verti][3];
 	int index = 0; //sane index
 	for (int i = 2; i < subt; i++) {
 		//if too few coordinates are passed.
@@ -339,7 +305,6 @@ static int addMesh(lua_State* L) {
 		std::vector<float> vector;
 		vector.push_back(xi); vector.push_back(yi); vector.push_back(zi);
 		vertices.push_back(vector);
-		//vertices[index][0] = xi; vertices[index][1] = yi; vertices[index][2] = zi;
 		index++;
 	}
 	SMesh* mesh = new SMesh();
@@ -527,33 +492,6 @@ int main()
 
 	smgr		= device->getSceneManager();
 	irr::gui::IGUIEnvironment* guienv	= device->getGUIEnvironment();
-
-
-	
-
-	/*irr::scene::IAnimatedMesh* mesh = smgr->getMesh("../Meshes/sydney.md2");
-	if (!mesh)
-	{
-		device->drop();
-		return 1;
-	}
-	node = smgr->addAnimatedMeshSceneNode(mesh);
-
-	if (node)
-	{
-		node->setMaterialFlag(irr::video::EMF_LIGHTING, false);
-		node->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
-		node->setMD2Animation(irr::scene::EMAT_STAND);
-		node->setMaterialTexture(0, driver->getTexture("../Meshes/sydney.bmp"));
-	}
-
-	node->setScale(irr::core::vector3df(0.5f, 0.5f, 0.5f));*/
-	
-	//smgr->addCameraSceneNode(0, irr::core::vector3df(0, 30, -40), irr::core::vector3df(0, 5, 0));
-	/*_addBox(20, 20, 20, 10);
-	_addBox(20, 20, 20, 10);
-	_addBox(20, 20, 20, 10);
-	_addBox(20, 20, 20, 10, "object_0");*/
 
 	lua_register(L, "bind", bind);
 	lua_register(L, "addBox", addBox);

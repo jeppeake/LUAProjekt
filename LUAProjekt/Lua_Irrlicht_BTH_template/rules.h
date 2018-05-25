@@ -21,25 +21,7 @@ public:
 		return true;
 	}
 
-	bool HEX(Tree** result) {
-		const char* start = input;
-		CharClass nonzerohex("123456789ABCDEFabcdef");
-		CharClass hexdigit("0123456789ABCDEFabcdef");
-		CharClass hexstart1("0");
-		CharClass hexstart2("x");
-		Seq hextest({ &hexstart1,&hexstart2, new Star(&hexdigit) });
-
-		int r = hextest.match(input);
-		if (r != -1) {
-			input += r;
-			*result = new Tree("HEX", (char*)start, input - start);
-			return true;
-		}
-		input = start;
-		return false;
-	}
-
-	bool NUM(Tree** result) {
+	bool NUM(Tree** result) {  //NUM: "-" | "+" | EMPTY DIGIT*
 		Tree* child1;
 		const char* start = input;
 		CharClass nonzero("123456789");
@@ -58,7 +40,7 @@ public:
 		return false;
 	}
 
-	bool DEC(Tree** result) {
+	bool DEC(Tree** result) { //DEC: "-" | "+" | EMPTY [1.9] [0-9]* "." [0-9]*
 		const char* start = input;
 		CharClass nonzero("123456789");
 		CharClass digit("0123456789");
@@ -81,21 +63,7 @@ public:
 		return false;
 	}
 
-	bool IDENT(Tree** result) {
-		const char* start = input;
-		CharClass equal("=");
-		CharClass character("[]\"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstvwxyz");
-		Seq identtest({ new Star(&character),&equal });
-		int r = identtest.match(input);
-		if (r != -1) {
-			input += r;
-			*result = new Tree("IDENTIFIER", (char*)start, input - start - 1);
-			return true;
-		}
-		return false;
-	}
-
-	bool STRING(Tree** result) {
+	bool STRING(Tree** result) {  //STRING: '"' [A-z0-9]* '"'
 		const char* start = input;
 		CharClass quote("\"");
 		CharClass character("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ");
@@ -110,7 +78,7 @@ public:
 		return false;
 	}
 
-	bool NEWLINE(Tree** result) {
+	bool NEWLINE(Tree** result) { //NEWLINE: "\n"
 		Tree* child1;
 		const char* start = input;
 		if (TERM("\n", &child1)) {
@@ -121,7 +89,7 @@ public:
 		return false;
 	}
 
-	bool TABSPACE() {
+	bool TABSPACE() { //["\n","\t"," "]* TABSPACE | EMPTY
 		Tree* child1;
 		const char* start = input;
 		if (TERM("\n", &child1) || TERM("\t", &child1) || TERM(" ", &child1)) {
@@ -131,7 +99,7 @@ public:
 		return true;
 	}
 
-	bool DECNUM(Tree** result) {
+	bool DECNUM(Tree** result) { //DECNUM: DEC | NUM
 		const char* start = input;
 		Tree* child1;
 		if (DEC(&child1) ||NUM(&child1)) {
@@ -143,7 +111,7 @@ public:
 		return false;
 	}
 
-	bool VERT(Tree** result) { //VERT: TERM("(") (VERT3 || VERT5 VERT) || EMPTY
+	bool VERT(Tree** result) { //VERT: TERM("(") (VERT3 | VERT5 VERT) | EMPTY
 		Tree* child1;
 		Tree* childnum1;
 		Tree* childnum2;
@@ -157,7 +125,7 @@ public:
 		TABSPACE();
 		if (TERM("(", &child1)) {
 			TABSPACE();
-			//VERT3: DEC TERM(",") DEC TERM(",") DEC TERM(")") TERM(",") || EMPTY
+			//VERT3: DECNUM TERM(",") DECNUM TERM(",") DECNUM TERM(")") TERM(",") | EMPTY
 			start2 = input;
 			if (DECNUM(&childnum1) && TERM(",", &child1) && TABSPACE() && DECNUM(&childnum2) && TERM(",", &child1) && TABSPACE() && DECNUM(&childnum3) && TERM(")", &child1) && (TERM(",", &child1) || TERM("", &child1))) {
 				*result = new Tree("VERT3", (char*)start, input - start);
@@ -173,7 +141,7 @@ public:
 			else {
 				input = start2;
 				TABSPACE();
-				//VERT3: DEC TERM(",") DEC TERM(",") DEC TERM(",") DEC TERM(",") DEC TERM(")") TERM(",") || EMTPY
+				//VERT3: DECNUM TERM(",") DECNUM TERM(",") DECNUM TERM(",") DECNUM TERM(",") DECNUM TERM(")") TERM(",") | EMTPY
 				if (DECNUM(&childnum1) && TERM(",", &child1) && TABSPACE() && DECNUM(&childnum2) && TERM(",", &child1) && TABSPACE() && DECNUM(&childnum3)
 					&& TERM(",", &child1) && TABSPACE() && DECNUM(&childnum4) && TERM(",", &child1) && TABSPACE() && DECNUM(&childnum5) && TERM(")", &child1) && (TERM(",", &child1) || TERM("", &child1))) {
 					*result = new Tree("VERT5", (char*)start, input - start);
@@ -195,7 +163,7 @@ public:
 		return false;
 	}
 
-	bool MESH(Tree** result) { //MESH: TERM("Mesh(") STRING TERM(")") NEWLINE TERM("{") NEWLINE VERT || NEWLINE TERM("}")
+	bool MESH(Tree** result) { //MESH: TERM("Mesh(") STRING TERM(")") NEWLINE TERM("{") VERT | TERM("}")
 		const char* start = input;
 		Tree* child1; 
 		Tree* child2;
@@ -212,7 +180,7 @@ public:
 		return false;
 	}
 
-	bool VECTOR(Tree** result) {
+	bool VECTOR(Tree** result) { //VECTOR: "(" DECNUM "," DECUM "," DECNUM ")" VECTOR | EMPTY
 		const char* start = input;
 		Tree* child1;
 		Tree* child2;
@@ -235,7 +203,7 @@ public:
 		return false;
 	}
 
-	bool TEXTURE(Tree** result) {
+	bool TEXTURE(Tree** result) { //TEXTURE: "Texture(" STRING ")" "{" VECTOR "}" 
 		const char* start = input;
 		Tree* child1;
 		Tree* child2;
@@ -251,54 +219,7 @@ public:
 		return false;
 	}
 
-	bool ASSIGN(Tree** result) {
-		Tree* child1; Tree* child2; 
-		const char* start = input;
-		if (IDENT(&child1)) {
-			if (STRING(&child2) || DEC(&child2) || NUM(&child2) || TABLE(&child2) || HEX(&child2)) {
-				*result = new Tree("ASSIGN", (char*)start, input - start);
-				(*result)->children.push_back(child1);
-				(*result)->children.push_back(child2);
-				return true;
-			}
-		}
-		input = start;
-		return false;
-	}
-
-	bool TABLE(Tree** result) {
-		Tree* child1;
-		Tree* child2;
-		Tree* child3;
-		const char* start = input;
-		if (TERM("{",&child1)) {
-			if (TABLE2(&child2)) {
-				if (TERM("}",&child3)) {
-					*result = new Tree("TABLE", (char*)start, input - start);
-					(*result)->children.push_back(child1);
-					(*result)->children.push_back(child2);
-					(*result)->children.push_back(child3);
-					return true;
-				}
-			}
-		}
-		input = start;
-		return false;
-	}
-
-	bool FIELDSEP(Tree** result) {
-		Tree* child1;
-		const char* start = input;
-		if (TERM(",", &child1) || TERM(";", &child1)) {
-			*result = new Tree("FIELDSEP", (char*)start, input - start);
-			(*result)->children.push_back(child1);
-			return true;
-		}
-		input = start;
-		return false;
-	}
-
-	bool MESHADD(Tree** result) {
+	bool MESHADD(Tree** result) { //MESHADD: "Mesh(" STRING ")"
 		Tree* child1;
 		Tree* child2;
 		const char* start = input;
@@ -311,7 +232,7 @@ public:
 		return false;
 	}
 
-	bool BIND(Tree** result) {
+	bool BIND(Tree** result) { //BIND: "Bind(" STRING "," MESHADD ")"
 		Tree* child1;
 		Tree* child2;
 		Tree* child3;
@@ -326,7 +247,7 @@ public:
 		return false;
 	}
 
-	bool SCENEACTION(Tree** result) {
+	bool SCENEACTION(Tree** result) { //SCENEACTION: MESHADD | BIND SCENACTION | EMPTY
 		Tree* child1;
 		Tree* child2;
 		const char* start = input;
@@ -344,7 +265,7 @@ public:
 		return false;
 	}
 
-	bool SCENE(Tree** result) {
+	bool SCENE(Tree** result) { //SCENE: "Scene()" "{" SCENEACTION "}"
 		Tree* child1;
 		Tree* child2;
 		const char* start = input;
@@ -360,7 +281,7 @@ public:
 		return false;
 	}
 
-	bool DESCRIPTOR(Tree** result) { //DESCRIPTOR: MESH || TEXTURE || SCENE DESCRIPTOR
+	bool DESCRIPTOR(Tree** result) { //DESCRIPTOR: MESH | TEXTURE | SCENE DESCRIPTOR
 		Tree* child1;
 		Tree* child2;
 		const char* start = input;
@@ -374,39 +295,6 @@ public:
 			return true;
 		}
 		input = start;
-		return false;
-	}
-
-	bool LOOP(Tree** result) {
-		Tree* child1;
-		Tree* child2;
-		Tree* child3;
-		const char* start = input;
-		if (HEX(&child1) || TABLE(&child1) || NUM(&child1) || DEC(&child1) || ASSIGN(&child1) || STRING(&child1)) {
-			*result = new Tree("FIELD", (char*)start, input - start);
-			(*result)->children.push_back(child1);
-			if (FIELDSEP(&child2)) {
-				(*result)->children.push_back(child2);
-				if (TABLE2(&child3)) {
-					(*result)->children.push_back(child3);
-					return true;
-				}
-				return true;
-			}
-			return true;
-		}
-		*result = new Tree("EMPTY FIELD", (char*)start, input - start);
-		return true;
-	}
-
-	bool TABLE2(Tree** result) {
-		Tree* child1;
-		const char* start = input;
-		if (LOOP(&child1)) {
-			*result = new Tree("FIELDLIST", (char*)start, input - start);
-			(*result)->children.push_back(child1);
-			return true;
-		}
 		return false;
 	}
 };

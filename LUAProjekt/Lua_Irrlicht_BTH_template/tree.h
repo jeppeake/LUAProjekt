@@ -166,12 +166,12 @@ public:
 
 				float sqr = sqrt(vectors.size());
 
-				if (std::fmod(sqr, 2) != 0) {
-					//error
-					return;
-				}
-
 				int dim1 = (int)sqr;
+
+				if ((dim1 & (dim1 - 1)) != 0) {
+					//error not power of 2
+					exit(EXIT_FAILURE);
+				}
 
 				float** values = new float*[dim1 * dim1];
 				irr::core::dimension2d<irr::u32> d2v(dim1, dim1);
