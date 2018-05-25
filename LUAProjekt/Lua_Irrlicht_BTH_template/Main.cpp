@@ -68,15 +68,29 @@ static int bind(lua_State* L) {
 
 	const irr::c8* object_p = object.c_str();
 
+	if (!searchName(object)) {
+		GLF::throwError(L, "Error: could not find node with that name!");
+		return 0;
+	}
+
+	
+
 	irr::io::path texture_p;
 	texture_p.append(texture.c_str());
 
 	irr::video::ITexture* tex = driver->getTexture(texture_p);
+
+	if (tex == nullptr) {
+		GLF::throwError(L, "Error: could not texture with that name!");
+		return 0;
+	}
+
 	irr::scene::ISceneNode* node = smgr->getSceneNodeFromName(object_p);
 
 	node->setMaterialTexture(0, tex);
 
 	lua_settop(L, 0);//clear cache
+	return 0;
 }
 
 static int addTexture(lua_State* L) {
@@ -341,7 +355,7 @@ static int addMesh(lua_State* L) {
 	buf->Indices.set_used(subt - 2);
 
 	for (int i = 0; i < vertices.size(); i++) {
-		buf->Vertices[i] = irr::video::S3DVertex(vertices[i][0], vertices[i][1], vertices[i][2], 0, 1, 0, irr::video::SColor(255, 255, 255, 255), 0, 1);
+		buf->Vertices[i] = irr::video::S3DVertex(vertices[i][0], vertices[i][1], vertices[i][2], 0, 1, 0, irr::video::SColor(255, 0, 0, 0), 0, 1);
 		buf->Indices[i] = i;
 	}
 
