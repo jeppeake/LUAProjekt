@@ -45,7 +45,7 @@ public:
 			float x = std::stof(children.at(0)->lexeme);
 			float y = std::stof(children.at(1)->lexeme);
 			float z = std::stof(children.at(2)->lexeme);
-			vertices->push_back(irr::video::S3DVertex(x, y, z, 0, 1, 0, irr::video::SColor(255, 0, 0, 0), 0, 1));
+			vertices->push_back(irr::video::S3DVertex(x, y, z, 0, 1, 0, irr::video::SColor(255, 255, 255, 255), 0, 1));
 			if (children.size() == 4) {
 				//step down the vertex list
 				children.at(3)->cumulateVertices(vertices);

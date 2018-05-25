@@ -341,8 +341,7 @@ static int addMesh(lua_State* L) {
 	buf->Indices.set_used(subt - 2);
 
 	for (int i = 0; i < vertices.size(); i++) {
-		std::cout << "Table[" << i << "] coordinates: " << vertices[i][0] << " " << vertices[i][1] << " " << vertices[i][2] << "\n";
-		buf->Vertices[i] = irr::video::S3DVertex(vertices[i][0], vertices[i][1], vertices[i][2], 0, 1, 0, irr::video::SColor(255, 0, 0, 0), 0, 1);
+		buf->Vertices[i] = irr::video::S3DVertex(vertices[i][0], vertices[i][1], vertices[i][2], 0, 1, 0, irr::video::SColor(255, 255, 255, 255), 0, 1);
 		buf->Indices[i] = i;
 	}
 
