@@ -30,12 +30,12 @@
 
 **D:**
 
-1. Implement the addTexture, and bind calls as described below. 
+1. Implement the addTexture, and bind calls as described below.* 
 
 **C:**
 
-1. Define the scene configuration language from the example data given below.
+1. Define the scene configuration language from the example data given below.*
 
-2. Implement the loadScene interface so that it destroys any current scene and instantiates the scene described in the given file.
+2. Implement the loadScene interface so that it destroys any current scene and instantiates the scene described in the given file.*
 
 3. The Lua(< ... >) construct is not necessary for this grade. *
