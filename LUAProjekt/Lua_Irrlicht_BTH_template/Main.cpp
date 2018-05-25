@@ -91,13 +91,13 @@ static int addTexture(lua_State* L) {
 		GLF::throwError(L, "ERROR: the dimension is not a power of two.");
 		return 0;
 	}
-	std::cout << dim1 << "\n";
+	//std::cout << dim1 << "\n";
 	int* dim2 = new int[dim1];
 	int start = 3;
 	for (int i = 3; i < dim1 + 3; i++) {
 		dim2[i - 3] = GLF::EDC(L, i);
 	}
-	std::cout << dim2[0] << " : " << dim2[1] << " : " << dim2[2] << " : " << dim2[3] << "\n";
+	//std::cout << dim2[0] << " : " << dim2[1] << " : " << dim2[2] << " : " << dim2[3] << "\n";
 	for (int i = 0; i < dim1; i++) {
 		if (dim2[i] != dim1) {
 			GLF::throwError(L,"ERROR: dimension mismatch.");
