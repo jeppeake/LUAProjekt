@@ -212,14 +212,39 @@ public:
 		return false;
 	}
 
+	bool VECTOR(Tree** result) {
+		const char* start = input;
+		Tree* child1;
+		Tree* child2;
+		Tree* child3;
+		Tree* child4;
+		Tree* childnext;
+		TABSPACE();
+		if (TERM("(", &child1) && DECNUM(&child2) && TERM(",", &child1) && TABSPACE() && DECNUM(&child3) && TERM(",", &child1) && DECNUM(&child4) && TERM(")", &child1)) {
+			*result = new Tree("VECTOR", (char*)start, input - start);
+			(*result)->children.push_back(child2);
+			(*result)->children.push_back(child3);
+			(*result)->children.push_back(child4);
+			if (TERM(",", &child1) && VECTOR(&childnext)) {
+				(*result)->children.push_back(childnext);
+				return true;
+			}
+			return true;
+		}
+		input = start;
+		return false;
+	}
+
 	bool TEXTURE(Tree** result) {
 		const char* start = input;
 		Tree* child1;
 		Tree* child2;
+		Tree* child3;
 		TABSPACE();
-		if (TERM("Texture(", &child1) && STRING(&child2) && TERM(")", &child1)) {
+		if (TERM("Texture(", &child1) && STRING(&child2) && TERM(")", &child1) && TABSPACE() && TERM("{", &child1) && VECTOR(&child3) && TABSPACE() && TERM("}", &child1) ) {
 			*result = new Tree("TEXTURE", (char*)start, input - start);
 			(*result)->children.push_back(child2);
+			(*result)->children.push_back(child3);
 			return true;
 		}
 		input = start;
@@ -287,6 +312,17 @@ public:
 	}
 
 	bool BIND(Tree** result) {
+		Tree* child1;
+		Tree* child2;
+		Tree* child3;
+		const char* start = input;
+		if (TERM("Bind(", &child1) && STRING(&child2) && TERM(",", &child1) && TABSPACE() && MESHADD(&child3) && TERM(")", &child1)) {
+			*result = new Tree("BIND", (char*)start, input - start);
+			(*result)->children.push_back(child2); //name
+			(*result)->children.push_back(child3); //mesh
+			return true;
+		}
+		input = start;
 		return false;
 	}
 

@@ -77,7 +77,6 @@ static int bind(lua_State* L) {
 	node->setMaterialTexture(0, tex);
 
 	lua_settop(L, 0);//clear cache
-
 }
 
 static int addTexture(lua_State* L) {
@@ -340,7 +339,7 @@ static int addMesh(lua_State* L) {
 
 	for (int i = 0; i < vertices.size(); i++) {
 		std::cout << "Table[" << i << "] coordinates: " << vertices[i][0] << " " << vertices[i][1] << " " << vertices[i][2] << "\n";
-		buf->Vertices[i] = irr::video::S3DVertex(vertices[i][0], vertices[i][1], vertices[i][2], 0, 1, 0, irr::video::SColor(255, 0, 255, 255), 0, 1);
+		buf->Vertices[i] = irr::video::S3DVertex(vertices[i][0], vertices[i][1], vertices[i][2], 0, 1, 0, irr::video::SColor(255, 0, 0, 0), 0, 1);
 		buf->Indices[i] = i;
 	}
 
@@ -397,12 +396,10 @@ static int snapshot(lua_State* L) {
 	luaL_argcheck(L, lua_isstring(L, -1), 1, "<string> expected.");
 	std::string output = luaL_checkstring(L,-1);
 
-	//render();
-	Sleep(500);
+	render();
+	Sleep(2000);
 
 	irr::video::IImage* ss = device->getVideoDriver()->createScreenShot();
-
-	
 
 	if (!device->getVideoDriver()->writeImageToFile(ss, output.c_str())) {
 		luaL_loadstring(L, "print('Error: failed to write file!')");
@@ -427,8 +424,12 @@ static int loadScene(lua_State* L) {
 	Tree* tred;
 	p.DESCRIPTOR(&tred);
 	tred->dump();
+
+	smgr->getRootSceneNode()->removeAll();
+	cameraNode = smgr->addCameraSceneNodeFPS();
+
 	std::vector<loadedmesh> meshes;
-	tred->generateScene(smgr, &meshes);
+	tred->generateScene(smgr, driver, device, &meshes);
 
 	return 0;
 }
