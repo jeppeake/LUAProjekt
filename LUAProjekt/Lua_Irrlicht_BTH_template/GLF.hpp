@@ -10,12 +10,8 @@
 #include <sstream>
 namespace GLF {//General LUA Functions
 	void throwError(lua_State* L, std::string error) {
-		std::stringstream ss;
-		ss << "print('" << error << "')";
-		luaL_loadstring(L, ss.str().c_str());
-		lua_pcall(L, 0, 0, 0);
-		lua_pop(L, 1);
-		lua_settop(L, 0);//might not be needed
+		luaL_loadstring(L, error.c_str());
+		lua_error(L);
 		//std::cout << lua_gettop(L) << "\n";
 	}
 

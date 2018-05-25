@@ -24,6 +24,8 @@ public:
 	std::vector<Tree*> children;
 	Tree(std::string t, char *l, int size) : tag(t), lexeme(l, size) {}
 
+	std::string error = "";
+
 	
 
 	//std::vector<loadedmesh> meshes;
@@ -37,6 +39,14 @@ public:
 		std::cout << tag << ": " << lexeme << "\n";
 		for (auto child : children) {
 			child->dump(depth+1);
+		}
+	}
+
+	void dumpErrors() {
+		if (error.length() != 0)
+			std::cout << error << "\n";
+		for (auto child : children) {
+			child->dumpErrors();
 		}
 	}
 
@@ -76,8 +86,10 @@ public:
 		}
 	}
 
-	void readSceneCommands(irr::scene::ISceneManager* smgr, irr::video::IVideoDriver* driver,  std::vector<loadedmesh>* mastermeshes) {
+	bool readSceneCommands(irr::scene::ISceneManager* smgr, irr::video::IVideoDriver* driver,  std::vector<loadedmesh>* mastermeshes) {
 		Tree* sceneAction = this;
+		bool success = false;
+		error = "Error: Meshname not found!";
 		if (sceneAction->children.at(0)->tag.compare("MESHADD") == 0) {
 			std::string meshname = sceneAction->children.at(0)->children.at(0)->lexeme;
 			for (int i = 0; i < mastermeshes->size(); i++) { //find mesh with name
@@ -90,6 +102,7 @@ public:
 					myNode->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
 					myNode->setMaterialFlag(irr::video::EMF_LIGHTING, false);
 					myNode->setMaterialFlag(irr::video::EMF_NORMALIZE_NORMALS, false);
+					success = true;
 				}
 			}
 		}
@@ -97,6 +110,7 @@ public:
 			std::string texname = sceneAction->children.at(0)->children.at(0)->lexeme;
 			if (sceneAction->children.at(0)->children.at(1)->tag.compare("MESHADD") == 0) {
 				std::string meshname = sceneAction->children.at(0)->children.at(1)->children.at(0)->lexeme;
+				
 				for (int i = 0; i < mastermeshes->size(); i++) { //find mesh with name
 					if (mastermeshes->at(i).name.compare(meshname) == 0) {
 						IMeshSceneNode* myNode = smgr->addMeshSceneNode(mastermeshes->at(i).mesh); //add mesh with name to the scene
@@ -111,9 +125,17 @@ public:
 						irr::io::path texture_p;
 						texture_p.append(texname.c_str());
 
-						myNode->setMaterialTexture(0, driver->getTexture(texture_p));
+						irr::video::ITexture* tex = driver->getTexture(texture_p);
+
+						if (tex == nullptr) {
+							error = "Could not find specified texture!";
+							return false;
+						}
+
+						myNode->setMaterialTexture(0, tex);
 						myNode->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
 						myNode->setMaterialFlag(irr::video::EMF_LIGHTING, false);
+						success = true;
 					}
 				}
 			}
@@ -121,9 +143,11 @@ public:
 		if (sceneAction->children.size() == 2) {
 			children.at(1)->readSceneCommands(smgr, driver, mastermeshes);
 		}
+		return success;
 	}
 
-	void generateScene(irr::scene::ISceneManager* smgr, irr::video::IVideoDriver* driver, irr::IrrlichtDevice* device, std::vector<loadedmesh>* meshes) { //Children are a 1. descriptor or 2. next descriptor node
+	bool generateScene(irr::scene::ISceneManager* smgr, irr::video::IVideoDriver* driver, irr::IrrlichtDevice* device, std::vector<loadedmesh>* meshes) { //Children are a 1. descriptor or 2. next descriptor node
+		bool success = true;
 		for (auto child : children) {
 			if (child->tag.compare("MESH") == 0) {
 				std::string name = children.at(0)->children.at(0)->lexeme;
@@ -170,6 +194,7 @@ public:
 
 				if ((dim1 & (dim1 - 1)) != 0) {
 					//error not power of 2
+					return false;
 					exit(EXIT_FAILURE);
 				}
 
@@ -187,7 +212,6 @@ public:
 					c.setGreen(vectors[i].Z*255);
 					unsigned int* b = new unsigned int;
 					c.getData(b, ECF_A8R8G8B8);
-					//std::cout << *b << "\n";
 					bf[i] = *b;
 				}
 
@@ -202,12 +226,13 @@ public:
 
 			}
 			else if (child->tag.compare("SCENE") == 0) {
-				child->children.at(0)->readSceneCommands(smgr, driver, meshes);
+				return child->children.at(0)->readSceneCommands(smgr, driver, meshes);
 
 			}
 			else if (child->tag.compare("DESCRIPTOR") == 0) {
-				child->generateScene(smgr, driver, device, meshes);
+				return child->generateScene(smgr, driver, device, meshes);
 			}
 		}
+		return success;
 	}
 };

@@ -247,9 +247,7 @@ static int addBox(lua_State* L) {
 
 static int updatepos(lua_State* L) {
 	if (lua_gettop(L) != 3) {
-		luaL_loadstring(L, "print('Wrong number of parameters, use this format: updatepos(x,y,z)')");
-		lua_pcall(L, 0, 0, 0);
-		lua_pop(L, 1);
+		GLF::throwError(L, "Wrong number of parameters, use this format: updatepos(x,y,z)");
 		return 0;
 	}
 	
@@ -266,9 +264,7 @@ static int addMesh(lua_State* L) {
 	
 
 	if (!lua_rawgeti(L, 1, 1)) {
-		luaL_loadstring(L, "print('Error: not a valid number of vertices.')");
-		lua_pcall(L, 0, 0, 0);
-		lua_pop(L, 1);
+		GLF::throwError(L, "Error: not a valid number of vertices.");
 		return 0;
 	}
 
@@ -279,10 +275,8 @@ static int addMesh(lua_State* L) {
 		subt++;
 	}
 
-	if ((subt - 2) % 3 != 0) {
-		luaL_loadstring(L, "print('Error: not a valid number of vertices.')");
-		lua_pcall(L, 0, 0, 0);
-		lua_pop(L, 1);
+	if ((subt - 2) % 3 != 0 || subt < 5) {
+		GLF::throwError(L, "Error: not a valid number of vertices.");
 		return 0;
 	}
 
@@ -291,17 +285,14 @@ static int addMesh(lua_State* L) {
 	for (int i = 2; i < subt; i++) {
 		//if too few coordinates are passed.
 		if (!lua_rawgeti(L, i, 1) || !lua_rawgeti(L, i, 2) || !lua_rawgeti(L, i, 3)) {
-			luaL_loadstring(L, "print('Error: number of components.')");
-			lua_pcall(L, 0, 0, 0);
-			lua_pop(L, 1);
+			GLF::throwError(L, "Error: number of components.");
 			return 0;
 		}
 		//check to make sure all elements are numbers
-		luaL_checknumber(L, -1); luaL_checknumber(L, -2); luaL_checknumber(L, -3);
 		//get all coordinates
-		float zi = lua_tonumber(L, -1);
-		float yi = lua_tonumber(L, -2);
-		float xi = lua_tonumber(L, -3);
+		float zi = luaL_checknumber(L, -1);
+		float yi = luaL_checknumber(L, -2);
+		float xi = luaL_checknumber(L, -3);
 		std::vector<float> vector;
 		vector.push_back(xi); vector.push_back(yi); vector.push_back(zi);
 		vertices.push_back(vector);
@@ -383,10 +374,7 @@ static int snapshot(lua_State* L) {
 	irr::video::IImage* ss = device->getVideoDriver()->createScreenShot();
 
 	if (!device->getVideoDriver()->writeImageToFile(ss, output.c_str())) {
-		luaL_loadstring(L, "print('Error: failed to write file!')");
-		lua_pcall(L, 0, 0, 0);
-		lua_pop(L, 1);
-		return 0;
+		GLF::throwError(L, "Error: failed to write file!");
 	}
 	return 0;
 }
@@ -411,7 +399,12 @@ static int loadScene(lua_State* L) {
 			cameraNode = smgr->addCameraSceneNodeFPS();
 
 			std::vector<loadedmesh> meshes;
-			tred->generateScene(smgr, driver, device, &meshes);
+			if (!tred->generateScene(smgr, driver, device, &meshes)) {
+				tred->dumpErrors();
+				smgr->getRootSceneNode()->removeAll();
+				cameraNode = smgr->addCameraSceneNodeFPS();
+				GLF::throwError(L, "Errors in scene file!");
+			}
 		}
 		else {
 			GLF::throwError(L, "Error compiling scene file!");
