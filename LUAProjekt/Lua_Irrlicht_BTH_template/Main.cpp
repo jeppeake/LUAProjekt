@@ -420,17 +420,26 @@ static int loadScene(lua_State* L) {
 
 	const char* chars = contents.c_str();
 
-	Parser p = Parser(chars);
-	Tree* tred;
-	p.DESCRIPTOR(&tred);
-	tred->dump();
+	if (contents.length() > 0) {
+		Parser p = Parser(chars);
+		Tree* tred;
+		if (p.DESCRIPTOR(&tred)) {
+			tred->dump();
 
-	smgr->getRootSceneNode()->removeAll();
-	cameraNode = smgr->addCameraSceneNodeFPS();
+			smgr->getRootSceneNode()->removeAll();
+			cameraNode = smgr->addCameraSceneNodeFPS();
 
-	std::vector<loadedmesh> meshes;
-	tred->generateScene(smgr, driver, device, &meshes);
-
+			std::vector<loadedmesh> meshes;
+			tred->generateScene(smgr, driver, device, &meshes);
+		}
+		else {
+			GLF::throwError(L, "Error compiling scene file!");
+		}
+		
+	}
+	else {
+		GLF::throwError(L, "Scene file not found!");
+	}
 	return 0;
 }
 
