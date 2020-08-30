@@ -1,5 +1,6 @@
 ﻿# LUAProjekt
 
+**A LUA implementation in an existing 3D engine made for a scripting course at BTH. Group: Gustaf Fagerström & Jesper Åkesson**
 
 #Att göra:
 
